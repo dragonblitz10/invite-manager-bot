@@ -9,6 +9,7 @@ import { IMService } from './Service';
 
 const SEND_MESSAGES = 0x00000800;
 const NOT_SEND_MESSAGES = 0x7ffff7ff;
+const util = require('../../util');
 
 type ScheduledActionFunctions = {
 	[k in ScheduledActionType]: (guild: Guild, args: any) => Promise<void>;
@@ -56,7 +57,7 @@ export class SchedulerService extends IMService {
 		const func = async () => {
 			const guild = this.client.guilds.get(action.guildId);
 			if (!guild) {
-				console.error('COULD NOT FIND GUILD FOR SCHEDULED FUNCTION', action.guildId);
+				util.error('COULD NOT FIND GUILD FOR SCHEDULED FUNCTION', action.guildId);
 				return;
 			}
 
@@ -73,7 +74,7 @@ export class SchedulerService extends IMService {
 				});
 			}
 		};
-		console.log(`Scheduling timer in ${chalk.blue(millisUntilAction)}ms for action ${chalk.blue(action.id)}`);
+		util.log(`Scheduling timer in ${chalk.blue(millisUntilAction)}ms for action ${chalk.blue(action.id)}`);
 		const timer = setTimeout(func, millisUntilAction);
 		this.scheduledActionTimers.set(action.id, timer);
 	}
@@ -91,7 +92,7 @@ export class SchedulerService extends IMService {
 	private async scheduleScheduledActions() {
 		let actions = await this.client.db.getScheduledActionsForGuilds(this.client.guilds.map((g) => g.id));
 		actions = actions.filter((a) => a.date !== null);
-		console.log(`Scheduling ${chalk.blue(actions.length)} actions from DB`);
+		util.log(`Scheduling ${chalk.blue(actions.length)} actions from DB`);
 		actions.forEach((action) => this.createTimer(action));
 	}
 
@@ -100,14 +101,14 @@ export class SchedulerService extends IMService {
 	//////////////////////////
 
 	private async unmute(guild: Guild, { memberId, roleId }: { memberId: string; roleId: string }) {
-		console.log('SCHEDULED TASK: UNMUTE', guild.id, memberId);
+		util.log('SCHEDULED TASK: UNMUTE', guild.id, memberId);
 
 		let member = guild.members.get(memberId);
 		if (!member) {
 			member = await guild.getRESTMember(memberId);
 		}
 		if (!member) {
-			console.error('SCHEDULED TASK: UNMUTE: COULD NOT FIND MEMBER', memberId);
+			util.error('SCHEDULED TASK: UNMUTE: COULD NOT FIND MEMBER', memberId);
 			return;
 		}
 
@@ -118,7 +119,7 @@ export class SchedulerService extends IMService {
 		guild: Guild,
 		{ channelId, roleId, wasAllowed }: { channelId: string; roleId: string; wasAllowed: boolean }
 	) {
-		console.log('SCHEDULED TASK: UNLOCK', guild.id, channelId, roleId);
+		util.log('SCHEDULED TASK: UNLOCK', guild.id, channelId, roleId);
 
 		let channel = guild.channels.get(channelId);
 		if (!channel) {
@@ -126,7 +127,7 @@ export class SchedulerService extends IMService {
 			channel = guild.channels.get(channelId);
 		}
 		if (!channel) {
-			console.error('SCHEDULED TASK: UNLOCK: COULD NOT FIND CHANNEL', channelId);
+			util.error('SCHEDULED TASK: UNLOCK: COULD NOT FIND CHANNEL', channelId);
 			return;
 		}
 

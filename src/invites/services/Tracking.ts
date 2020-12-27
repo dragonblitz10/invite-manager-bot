@@ -9,6 +9,7 @@ import { JoinInvalidatedReason } from '../../framework/models/Join';
 import { IMService } from '../../framework/services/Service';
 import { BasicMember, GuildPermission } from '../../types';
 import { deconstruct } from '../../util';
+const util = require('../../util');
 
 const GUILDS_IN_PARALLEL = os.cpus().length;
 const INVITE_CREATE = 40;
@@ -41,7 +42,7 @@ export class TrackingService extends IMService {
 			return;
 		}
 
-		console.log(`Requesting ${chalk.blue(GUILDS_IN_PARALLEL)} guilds in parallel during startup`);
+		util.debug(`Requesting ${chalk.blue(GUILDS_IN_PARALLEL)} guilds in parallel during startup`);
 
 		// Save all guilds, sort descending by member count
 		// (Guilds with more members are more likely to get a join)
@@ -73,7 +74,7 @@ export class TrackingService extends IMService {
 
 				if (!guild) {
 					if (allGuilds.length) {
-						console.error('Guild in pending list was null but list is not empty');
+						util.error('Guild in pending list was null but list is not empty');
 					}
 					return;
 				}
@@ -87,17 +88,17 @@ export class TrackingService extends IMService {
 						console.error(err);
 					}
 
-					console.log(`Updated invite count for ${chalk.blue(guild.name)}`);
+					util.debug(`Updated invite count for ${chalk.blue(guild.name)}`);
 				}
 
 				this.pendingGuilds.delete(guild.id);
 				if (this.pendingGuilds.size % 50 === 0) {
-					console.log(`Pending: ${chalk.blue(`${this.pendingGuilds.size}/${this.initialPendingGuilds}`)}`);
+					util.debug(`Pending: ${chalk.blue(`${this.pendingGuilds.size}/${this.initialPendingGuilds}`)}`);
 					await this.client.rabbitmq.sendStatusToManager();
 				}
 
 				if (this.pendingGuilds.size === 0) {
-					console.log(chalk.green(`Loaded all pending guilds!`));
+					util.debug(chalk.green(`Loaded all pending guilds!`));
 					this.startupDone();
 				}
 
@@ -272,13 +273,7 @@ export class TrackingService extends IMService {
 	}
 
 	private async onGuildMemberAdd(guild: Guild, member: Member) {
-		console.log(
-			'EVENT(guildMemberAdd):',
-			guild.id,
-			guild.name,
-			member.id,
-			member.username + '#' + member.discriminator
-		);
+		util.debug('EVENT(guildMemberAdd):', guild.id, guild.name, member.id, member.username + '#' + member.discriminator);
 
 		// Ignore disabled guilds
 		if (this.client.disabledGuilds.has(guild.id)) {
@@ -288,7 +283,7 @@ export class TrackingService extends IMService {
 		if (member.user.bot) {
 			// Check if it's our premium bot
 			if (member.user.id === this.client.config.proBotId) {
-				console.log(`DISABLING BOT FOR ${guild.id} BECAUSE PRO VERSION IS ACTIVE`);
+				util.debug(`DISABLING BOT FOR ${guild.id} BECAUSE PRO VERSION IS ACTIVE`);
 				this.client.disabledGuilds.add(guild.id);
 			}
 
@@ -300,7 +295,7 @@ export class TrackingService extends IMService {
 		const sets = await this.client.cache.guilds.get(guild.id);
 		if (sets.joinRoles && sets.joinRoles.length > 0) {
 			if (!guild.members.get(this.client.user.id).permission.has(GuildPermission.MANAGE_ROLES)) {
-				console.log(`TRYING TO SET JOIN ROLES IN ${guild.id} WITHOUT MANAGE_ROLES PERMISSION`);
+				util.debug(`TRYING TO SET JOIN ROLES IN ${guild.id} WITHOUT MANAGE_ROLES PERMISSION`);
 			} else {
 				const premium = await this.client.cache.premium.get(guild.id);
 				const roles = premium ? sets.joinRoles : sets.joinRoles.slice(0, 1);
@@ -311,7 +306,7 @@ export class TrackingService extends IMService {
 
 		// If we don't have manage server then what are we even doing here and why did you invite our bot
 		if (!guild.members.get(this.client.user.id).permission.has(GuildPermission.MANAGE_GUILD)) {
-			console.error(`BOT DOESN'T HAVE MANAGE SERVER PERMISSIONS FOR ${guild.id} ON MEMBERADD`);
+			util.error(`BOT DOESN'T HAVE MANAGE SERVER PERMISSIONS FOR ${guild.id} ON MEMBERADD`);
 			return;
 		}
 
@@ -324,7 +319,7 @@ export class TrackingService extends IMService {
 		this.inviteStoreUpdate[guild.id] = Date.now();
 
 		if (!oldInvs) {
-			console.error('Invite cache for guild ' + guild.id + ' was undefined when adding member ' + member.id);
+			util.error('Invite cache for guild ' + guild.id + ' was undefined when adding member ' + member.id);
 			return;
 		}
 
@@ -335,7 +330,7 @@ export class TrackingService extends IMService {
 			inviteCodesUsed.length === 0 &&
 			guild.members.get(this.client.user.id).permission.has(GuildPermission.VIEW_AUDIT_LOGS)
 		) {
-			console.log(`USING AUDIT LOGS FOR ${member.id} IN ${guild.id}`);
+			util.debug(`USING AUDIT LOGS FOR ${member.id} IN ${guild.id}`);
 
 			const logs = await guild.getAuditLogs(50, undefined, INVITE_CREATE).catch(() => null as GuildAuditLog);
 			if (logs && logs.entries.length) {
@@ -381,7 +376,7 @@ export class TrackingService extends IMService {
 		}
 
 		if (inviteCodesUsed.length === 0) {
-			console.error(
+			util.error(
 				`NO USED INVITE CODE FOUND: g:${guild.id} | m: ${member.id} ` +
 					`| t:${member.joinedAt} | invs: ${JSON.stringify(newInvs)} ` +
 					`| oldInvs: ${JSON.stringify(oldInvs)}`
@@ -480,13 +475,13 @@ export class TrackingService extends IMService {
 		if (joinChannelId) {
 			// Check if it's a valid channel
 			if (!joinChannel) {
-				console.error(`Guild ${guild.id} has invalid join message channel ${joinChannelId}`);
+				util.error(`Guild ${guild.id} has invalid join message channel ${joinChannelId}`);
 
 				// Reset the channel
 				await this.client.cache.guilds.setOne(guild.id, GuildSettingsKey.joinMessageChannel, null);
 			} else if (!(joinChannel instanceof TextChannel)) {
 				// Someone set a non-text channel as join channel
-				console.error(`Guild ${guild.id} has non-text join message channel ${joinChannelId}`);
+				util.error(`Guild ${guild.id} has non-text join message channel ${joinChannelId}`);
 
 				// Reset the channel
 				await this.client.cache.guilds.setOne(guild.id, GuildSettingsKey.joinMessageChannel, null);
@@ -494,7 +489,7 @@ export class TrackingService extends IMService {
 				joinChannel = undefined;
 			} else if (!joinChannel.permissionsOf(this.client.user.id).has(GuildPermission.SEND_MESSAGES)) {
 				// We don't have permission to send messages in the join channel
-				console.error(`Guild ${guild.id} can't send messages in join channel ${joinChannelId}`);
+				util.error(`Guild ${guild.id} can't send messages in join channel ${joinChannelId}`);
 
 				// Reset the channel
 				await this.client.cache.guilds.setOne(guild.id, GuildSettingsKey.joinMessageChannel, null);
@@ -625,13 +620,13 @@ export class TrackingService extends IMService {
 	}
 
 	private async onGuildMemberRemove(guild: Guild, member: Member) {
-		console.log('EVENT(guildMemberRemove):', guild.name, member.user.username, member.user.discriminator);
+		util.debug('EVENT(guildMemberRemove):', guild.name, member.user.username, member.user.discriminator);
 
 		if (member.user.bot) {
 			// If the pro version of our bot left, re-enable this version
 			if (member.user.id === this.client.config.proBotId) {
 				this.client.disabledGuilds.delete(guild.id);
-				console.log(`ENABLING BOT IN ${guild.id} BECAUSE PRO VERSION LEFT`);
+				util.debug(`ENABLING BOT IN ${guild.id} BECAUSE PRO VERSION LEFT`);
 			}
 
 			// We don't have to record bot leave events
@@ -671,14 +666,14 @@ export class TrackingService extends IMService {
 		// Check if leave channel is valid
 		const leaveChannel = leaveChannelId ? (guild.channels.get(leaveChannelId) as TextChannel) : undefined;
 		if (leaveChannelId && !leaveChannel) {
-			console.error(`Guild ${guild.id} has invalid leave message channel ${leaveChannelId}`);
+			util.error(`Guild ${guild.id} has invalid leave message channel ${leaveChannelId}`);
 			// Reset the channel
 			await this.client.cache.guilds.setOne(guild.id, GuildSettingsKey.leaveMessageChannel, null);
 		}
 
 		// Exit if we can't find the join
 		if (!join || !join.exactMatchCode) {
-			console.log(`Could not find join for ${member.id} in ` + `${guild.id}`);
+			util.debug(`Could not find join for ${member.id} in ` + `${guild.id}`);
 			if (leaveChannel) {
 				leaveChannel
 					.createMessage(
@@ -780,7 +775,7 @@ export class TrackingService extends IMService {
 
 	public async insertGuildData(guild: Guild) {
 		if (!guild.members.get(this.client.user.id).permission.has(GuildPermission.MANAGE_GUILD)) {
-			console.error(`BOT DOESN'T HAVE MANAGE SERVER PERMISSIONS FOR ${guild.id} ON INSERT`);
+			util.error(`BOT DOESN'T HAVE MANAGE SERVER PERMISSIONS FOR ${guild.id} ON INSERT`);
 			return;
 		}
 

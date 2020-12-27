@@ -16,6 +16,7 @@ const IGNORED_ANNOUNCEMENT_WORDS = [
 	/lyrics?/gi,
 	/[\(\[\{].*?[\)\[\{]/gi
 ];
+const util = require('../../util');
 
 export class MusicConnection {
 	private service: MusicService;
@@ -153,10 +154,10 @@ export class MusicConnection {
 			this.player.on('stateUpdate', this.onStateUpdate);
 			this.player.on('end', this.onStreamEnd);
 			this.player.on('reconnect', () => {
-				console.error(`Reconnected lavalink player for guild ${this.guild.id}`);
+				util.error(`Reconnected lavalink player for guild ${this.guild.id}`);
 			});
 			this.player.on('disconnect', async () => {
-				console.error(`Player disconnected for guild ${this.guild.id}`);
+				util.error(`Player disconnected for guild ${this.guild.id}`);
 				this.player = null;
 				this.voiceChannel.leave();
 				await this.service.removeConnection(this.guild);
@@ -195,8 +196,6 @@ export class MusicConnection {
 	}
 
 	private async onStreamEnd(data: any) {
-		console.log(data);
-
 		if (data.reason && data.reason === 'REPLACED') {
 			return;
 		}

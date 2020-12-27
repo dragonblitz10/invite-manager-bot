@@ -35,6 +35,7 @@ import { MusicCache } from './music/cache/MusicCache';
 import { MusicService } from './music/services/MusicService';
 import { botDefaultSettings, BotSettingsObject, guildDefaultSettings } from './settings';
 import { BotType, ChannelType, LavaPlayerManager } from './types';
+const util = require('util');
 
 i18n.configure({
 	locales: ['cs', 'de', 'en', 'es', 'fr', 'it', 'ja', 'nl', 'pl', 'pt', 'pt_BR', 'ro', 'ru', 'tr'],
@@ -253,7 +254,7 @@ export class IMClient extends Client {
 	public async waitForStartupTicket() {
 		const start = process.uptime();
 		const interval = setInterval(
-			() => console.log(`Waiting for ticket since ${chalk.blue(Math.floor(process.uptime() - start))} seconds...`),
+			() => util.log(`Waiting for ticket since ${chalk.blue(Math.floor(process.uptime() - start))} seconds...`),
 			10000
 		);
 		await this.service.rabbitmq.waitForStartupTicket();
@@ -262,7 +263,7 @@ export class IMClient extends Client {
 
 	private async onClientReady(): Promise<void> {
 		if (this.hasStarted) {
-			console.error('BOT HAS ALREADY STARTED, IGNORING EXTRA READY EVENT');
+			util.error('BOT HAS ALREADY STARTED, IGNORING EXTRA READY EVENT');
 			return;
 		}
 
@@ -466,8 +467,7 @@ export class IMClient extends Client {
 					'I am now tracking all invites on your server.\n\n' +
 					'To get help setting up join messages or changing the prefix, please run the `!setup` command.\n\n' +
 					'You can see a list of all commands using the `!help` command.\n\n' +
-					`That's it! Enjoy the bot and if you have any questions feel free to join our support server!\n` +
-					'https://discord.gg/2eTnsVM'
+					`That's it! Enjoy the bot and if you have any questions feel free refer to our docs!`
 			)
 			.catch(() => undefined);
 	}
@@ -507,7 +507,7 @@ export class IMClient extends Client {
 		if (member.user.bot) {
 			// Check if it's our pro bot
 			if (this.type === BotType.regular && member.user.id === this.config.bot.ids.pro) {
-				console.log(`DISABLING BOT FOR ${guildId} BECAUSE PRO VERSION IS ACTIVE`);
+				util.debug(`DISABLING BOT FOR ${guildId} BECAUSE PRO VERSION IS ACTIVE`);
 				this.disabledGuilds.add(guildId);
 			}
 			return;
@@ -518,7 +518,7 @@ export class IMClient extends Client {
 		// If the pro version of our bot left, re-enable this version
 		if (this.type === BotType.regular && member.user.id === this.config.bot.ids.pro) {
 			this.disabledGuilds.delete(guild.id);
-			console.log(`ENABLING BOT IN ${guild.id} BECAUSE PRO VERSION LEFT`);
+			util.debug(`ENABLING BOT IN ${guild.id} BECAUSE PRO VERSION LEFT`);
 		}
 	}
 
@@ -628,15 +628,14 @@ export class IMClient extends Client {
 
 		this.editStatus(status, { name, type, url });
 	}
-
 	private async onConnect() {
-		console.error('DISCORD CONNECT');
+		console.log(`${chalk.yellow('[Debug]')} ${chalk.reset('DISCORD CONNECT')}`);
 		this.gatewayConnected = true;
 		await this.rabbitmq.sendStatusToManager();
 	}
 
 	private async onDisconnect(err: Error) {
-		console.error('DISCORD DISCONNECT');
+		console.log(`${chalk.yellow('[Debug]')} ${chalk.reset('DISCORD DISCONNECT')}`);
 		this.gatewayConnected = false;
 		await this.rabbitmq.sendStatusToManager(err);
 

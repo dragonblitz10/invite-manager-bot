@@ -71,9 +71,9 @@ const main = async () => {
 
 	await client.waitForStartupTicket();
 
-	console.log(chalk.green('-------------------------------------'));
+	console.log(chalk.blue('-------------------------------------'));
 	console.log(chalk.green('Connecting to discord...'));
-	console.log(chalk.green('-------------------------------------'));
+	console.log(chalk.blue('-------------------------------------'));
 	await client.connect();
 };
 

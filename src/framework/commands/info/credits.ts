@@ -7,18 +7,6 @@ import { Command, Context } from '../Command';
 // Developers
 const developers: string[] = ['Andy#1801', 'Valandur#3581', 'santjum#0450', 'legendarylol#8215'];
 
-// Staff
-const moderators: string[] = [
-	'malok#8571',
-	'Alan Wen#3344',
-	'GTA Tetris#4587',
-	'𝕸σσɳ유#2296',
-	'SemiMute#2018',
-	'Mennoplays#0001'
-];
-
-const staff: string[] = ['Audio#0265', 'Chris.#0006', 'Gugu72#0016'];
-
 const translators: string[] = [
 	'legendarylol#8215',
 	'Mennoplays#5943',
@@ -53,16 +41,6 @@ export default class extends Command {
 		embed.fields.push({
 			name: t('cmd.credits.developers'),
 			value: this.getList(developers)
-		});
-
-		embed.fields.push({
-			name: t('cmd.credits.moderators'),
-			value: this.getList(moderators)
-		});
-
-		embed.fields.push({
-			name: t('cmd.credits.staff'),
-			value: this.getList(staff)
 		});
 
 		embed.fields.push({

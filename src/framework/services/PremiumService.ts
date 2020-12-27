@@ -4,6 +4,7 @@ import moment from 'moment';
 import { BotType } from '../../types';
 
 import { IMService } from './Service';
+const util = require('../../util');
 
 export class PremiumService extends IMService {
 	public async onClientReady() {
@@ -19,7 +20,7 @@ export class PremiumService extends IMService {
 			return;
 		}
 
-		console.log('Checking all guilds for premium...');
+		util.log('Checking all guilds for premium...');
 		for (const guild of this.client.guilds.values()) {
 			let premium = await this.client.cache.premium._get(guild.id);
 

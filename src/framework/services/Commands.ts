@@ -11,6 +11,7 @@ import { Command, Context } from '../commands/Command';
 import { BooleanResolver } from '../resolvers';
 
 import { IMService } from './Service';
+const util = require('../../util');
 
 const CMD_DIRS = [
 	resolve(__dirname, '../commands'),
@@ -41,7 +42,7 @@ export class CommandsService extends IMService {
 	private commandCalls: Map<string, { last: number; warned: boolean }> = new Map();
 
 	public async init() {
-		console.log(`Loading commands...`);
+		util.log(`Loading commands...`);
 
 		// Load all commands
 		const loadRecursive = async (dir: string) => {
@@ -71,7 +72,7 @@ export class CommandsService extends IMService {
 
 					// Register main commnad name
 					if (this.cmdMap.has(inst.name.toLowerCase())) {
-						console.error(`Duplicate command name ${inst.name}`);
+						util.error(`Duplicate command name ${inst.name}`);
 						process.exit(1);
 					}
 					this.cmdMap.set(inst.name.toLowerCase(), inst);
@@ -79,19 +80,19 @@ export class CommandsService extends IMService {
 					// Register aliases
 					inst.aliases.forEach((a) => {
 						if (this.cmdMap.has(a.toLowerCase())) {
-							console.error(`Duplicate command alias ${a}`);
+							util.error(`Duplicate command alias ${a}`);
 							process.exit(1);
 						}
 						this.cmdMap.set(a.toLowerCase(), inst);
 					});
 
-					console.log(`Loaded ${chalk.blue(inst.name)} from ${chalk.gray(relative(process.cwd(), file))}`);
+					util.log(`Loaded ${chalk.blue(inst.name)} from ${chalk.gray(relative(process.cwd(), file))}`);
 				}
 			}
 		};
 		await Promise.all(CMD_DIRS.map((dir) => loadRecursive(dir)));
 
-		console.log(`Loaded ${chalk.blue(this.commands.length)} commands!`);
+		util.log(`Loaded ${chalk.blue(this.commands.length)} commands!`);
 	}
 
 	public async onClientReady() {
@@ -269,7 +270,7 @@ export class CommandsService extends IMService {
 				member = await guild.getRESTMember(message.author.id);
 			}
 			if (!member) {
-				console.error(`Could not get member ${message.author.id} for ${guild.id}`);
+				util.error(`Could not get member ${message.author.id} for ${guild.id}`);
 				await this.client.msg.sendReply(message, t('permissions.memberError'));
 				return;
 			}

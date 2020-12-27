@@ -7,6 +7,8 @@ import { IMService } from '../../framework/services/Service';
 import { BasicInvite, BasicMember, GuildPermission } from '../../types';
 import { Rank } from '../models/Rank';
 
+const util = require('../../util');
+
 export interface LeaderboardEntry {
 	id: string;
 	name: string;
@@ -248,7 +250,7 @@ export class InvitesService extends IMService {
 			const role = guild.roles.get(rank.roleId);
 
 			if (!role) {
-				console.log(`ROLE ${rank.roleId} FOR RANK DOES NOT EXIST IN GUILD ${rank.guildId}`);
+				util.debug(`ROLE ${rank.roleId} FOR RANK DOES NOT EXIST IN GUILD ${rank.guildId}`);
 				continue;
 			}
 
@@ -306,7 +308,7 @@ export class InvitesService extends IMService {
 							.catch(() => undefined);
 					}
 				} else {
-					console.error(`Guild ${guild.id} has invalid ` + `rank announcement channel ${rankChannelId}`);
+					util.error(`Guild ${guild.id} has invalid ` + `rank announcement channel ${rankChannelId}`);
 					await this.client.cache.guilds.setOne(guild.id, GuildSettingsKey.rankAnnouncementChannel, null);
 				}
 			}

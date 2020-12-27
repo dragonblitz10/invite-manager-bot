@@ -35,6 +35,7 @@ import { ScheduledAction, ScheduledActionType } from '../models/ScheduledAction'
 import { IMService } from './Service';
 
 const GLOBAL_SHARD_ID = 0;
+const util = require('../../util');
 
 enum TABLE {
 	botSettings = '`botSettings`',
@@ -96,7 +97,7 @@ export class DatabaseService extends IMService {
 			this.dbCount = Math.max(this.dbCount, range.to);
 		}
 
-		console.log(`We're connected to ${this.dbCount} db shards on ${client.config.databases.length} different servers`);
+		util.log(`We're connected to ${this.dbCount} db shards on ${client.config.databases.length} different servers`);
 
 		setInterval(() => this.syncDB(), 10000);
 	}

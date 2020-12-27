@@ -1,7 +1,7 @@
 import { IMClient } from '../client';
 
 // tslint:disable-next-line: variable-name
-const RequestHandler = require('eris/lib/rest/RequestHandler');
+const RequestHandler = require('eris').RequestHandler;
 
 export interface RequestStat {
 	total: number;

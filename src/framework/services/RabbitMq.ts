@@ -9,6 +9,7 @@ import { BotType, ShardCommand } from '../../types';
 import { IMService } from './Service';
 
 const BOT_SHARDING = 16;
+const util = require('../../util');
 
 interface ShardMessage {
 	id: string;
@@ -124,8 +125,8 @@ export class RabbitMqService extends IMService {
 
 	public async waitForStartupTicket() {
 		if (!this.conn) {
-			console.log(chalk.yellow('No connection available, this is ok for single installations or in dev mode.'));
-			console.log(chalk.yellow('Skipping start ticket...'));
+			util.debug(chalk.yellow('No connection available, this is ok for single installations or in dev mode.'));
+			util.debug(chalk.yellow('Skipping start ticket...'));
 			return;
 		}
 
@@ -169,7 +170,7 @@ export class RabbitMqService extends IMService {
 			this.channelStartup.consume(
 				this.qNameStartup,
 				(msg) => {
-					console.log(chalk.green(`Aquired start ticket!`));
+					util.debug(chalk.green(`Aquired start ticket!`));
 
 					this.waitingForTicket = false;
 
@@ -198,7 +199,7 @@ export class RabbitMqService extends IMService {
 
 	public async sendToManager(message: { id: string; [x: string]: any }, isResend: boolean = false) {
 		if (!this.conn) {
-			console.log('Send message to RabbitMQ', JSON.stringify(message, null, 2));
+			util.debug('Send message to RabbitMQ', JSON.stringify(message, null, 2));
 			return;
 		}
 
@@ -254,7 +255,7 @@ export class RabbitMqService extends IMService {
 		const guildId = content.guildId;
 		const guild = this.client.guilds.get(guildId);
 
-		console.log(`RECEIVED SHARD COMMAND: ${JSON.stringify(content)}`);
+		util.debug(`RECEIVED SHARD COMMAND: ${JSON.stringify(content)}`);
 
 		this.channel.ack(msg, false);
 
