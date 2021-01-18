@@ -263,7 +263,7 @@ export class IMClient extends Client {
 
 	private async onClientReady(): Promise<void> {
 		if (this.hasStarted) {
-			util.error('BOT HAS ALREADY STARTED, IGNORING EXTRA READY EVENT');
+			console.log('BOT HAS ALREADY STARTED, IGNORING EXTRA READY EVENT');
 			return;
 		}
 
